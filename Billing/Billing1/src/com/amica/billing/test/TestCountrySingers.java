@@ -98,7 +98,7 @@ public class TestCountrySingers {
 //		billing.createCustomer("Merle", "Haggard", Terms.CASH);
 //		billing.createInvoice("Merle Haggard", 100);
 //		billing.createInvoice("John Hiatt", 999);
-//		billing.payInvoice(107);
+		billing.payInvoice(107);
 
 	}
 	

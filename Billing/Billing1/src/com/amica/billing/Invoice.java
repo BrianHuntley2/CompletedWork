@@ -15,5 +15,7 @@ public class Invoice {
     private Optional<LocalDate> paidDate;
     private Customer customer;
 
-
+    public void setPaidDate(Optional<LocalDate> paidDate) {
+        this.paidDate = paidDate;
+    }
 }

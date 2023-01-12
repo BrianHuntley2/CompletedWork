@@ -129,8 +129,7 @@ public class CSVParser implements Parser{
 	 * Helper to write a CSV representation of one customer.
 	 */
 	public String formatCustomer(Customer customer) {
-		//TODO provide the values to be formatted
-		return String.format("%s,%s,%s", "NYI", "NYI", "NYI");
+		return String.format("%s,%s,%s", customer.getFirstName(), customer.getLastName(), customer.getTerms());
 	}
 	
 	/**
@@ -138,9 +137,10 @@ public class CSVParser implements Parser{
 	 */
 
 	public String formatInvoice(Invoice invoice) {
-		//TODO provide the values to be formatted
-		return String.format("%d,%s,%s,%.2f,%s%s", 
-				0, "NYI", "NYI", 0.0, "NYI", "NYI");
+		return String.format("%d,%s,%s,%.2f,%s,%s",
+				invoice.getNumber(), invoice.getCustomer().getFirstName(), invoice.getCustomer().getLastName(),
+				invoice.getAmount(), invoice.getInvoiceDate(),
+				invoice.getPaidDate().isPresent() ? invoice.getPaidDate().get() : "");
 	}
 
 	@Override
@@ -155,11 +155,11 @@ public class CSVParser implements Parser{
 
 	@Override
 	public Stream<String> produceCustomers(Stream<Customer> customers) {
-		return null;
+		return customers.map(this::formatCustomer);
 	}
 
 	@Override
 	public Stream<String> produceInvoices(Stream<Invoice> invoices) {
-		return null;
+		return invoices.map(this::formatInvoice);
 	}
 }
