@@ -2,6 +2,7 @@ package com.amica.billing;
 
 import com.amica.billing.parse.Parser;
 import com.amica.billing.parse.ParserFactory;
+import lombok.extern.java.Log;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -13,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Log
 public class Billing {
     private String customerFilename;
     private String invoiceFilename;
@@ -20,6 +22,7 @@ public class Billing {
     private Map<String, Customer> customerMap;
     private List<Invoice> invoiceList;
     private List<Consumer<Invoice>> invoiceListeners;
+    private List<Consumer<Customer>> customerListeners;
 
     public Billing(String customerFilename, String invoiceFilename) {
         try {
@@ -31,6 +34,7 @@ public class Billing {
             this.invoiceList = parser.parseInvoices(Files.lines(Paths.get(invoiceFilename)), customerMap)
                                 .collect(Collectors.toList());
             this.invoiceListeners = new ArrayList<Consumer<Invoice>>();
+            this.customerListeners = new ArrayList<Consumer<Customer>>();
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -48,7 +52,7 @@ public class Billing {
     private void saveCustomers(){
         try (PrintWriter out = new PrintWriter (new FileWriter(customerFilename)); ) {
             Stream<String> lines = parser.produceCustomers(customerMap.values().stream());
-            lines.forEach(s -> out.print(s));
+            lines.forEach(s -> out.print(s+"\n"));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -73,6 +77,25 @@ public class Billing {
         }
     }
 
+    public void createCustomer(String first, String last, Terms term){
+        Customer customer = new Customer(first, last, term);
+        customerMap.put(first + " " + last, customer);
+        saveCustomers();
+        customerListeners.forEach(c -> c.accept(customer));
+    }
+
+    public void createInvoice(String name, double amount){
+        if(customerMap.containsKey(name)){
+            Invoice invoice = new Invoice(invoiceList.size(), amount, LocalDate.now(), Optional.empty(), customerMap.get(name));
+            invoiceList.add(invoice);
+            saveInvoices();
+            invoiceListeners.forEach(c -> c.accept(invoice));
+        }else{
+            log.warning(() ->
+                    "Couldn't find customer, skipping invoice.");
+        }
+    }
+
     public void addInvoiceListener(Consumer<Invoice> listener){
         invoiceListeners.add(listener);
     }
@@ -80,6 +103,15 @@ public class Billing {
     public void removeInvoiceListener(Consumer<Invoice> listener){
         invoiceListeners.remove(listener);
     }
+
+    public void addCustomerListener(Consumer<Customer> listener){
+        customerListeners.add(listener);
+    }
+
+    public void removeCustomerListener(Consumer<Customer> listener){
+        customerListeners.remove(listener);
+    }
+
 
     private Comparator<Invoice> compareByNumber = Comparator.comparing(Invoice::getNumber);
 
@@ -97,8 +129,6 @@ public class Billing {
                 .collect(Collectors.toList());
     }
 
-    //private Comparator<Invoice> compareByCustomer = Comparator.comparing(Customer::getName);
-
     public List<Invoice> getInvoicesGroupedByCustomer(){
         Map<Customer, List<Invoice>> grouped = invoiceList.stream()
                                                 .collect(Collectors.groupingBy(Invoice::getCustomer));
@@ -109,12 +139,26 @@ public class Billing {
         return ret;
     }
 
-//    public List<Invoice> getOverdueInvoices(){
-//
-//    }
-//
-//    public List<Invoice> getCustomersAndVolume(){
-//
-//    }
+    public List<Invoice> getOverdueInvoices(){
+        return invoiceList.stream()
+                .filter(i -> i.getPaidDate().isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public Map<Customer, Double> getCustomersAndVolume(){
+        List<Customer> customers = invoiceList.stream()
+                .map(Invoice::getCustomer).collect(Collectors.toList());
+
+        Map<Customer, Double> ret = new HashMap<>();
+        for(Customer c : customers){
+            ret.put(c,
+            invoiceList.stream()
+                    .filter(i -> i.getCustomer() == c)
+                    .mapToDouble(Invoice::getAmount)
+                    .sum()
+            );
+        }
+        return ret;
+    }
 
 }

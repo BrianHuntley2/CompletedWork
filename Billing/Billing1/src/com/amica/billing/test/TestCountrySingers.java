@@ -91,13 +91,13 @@ public class TestCountrySingers {
 				(billing, OUTPUT_FOLDER, LocalDate.of(2021, 12, 1));
 		
 		reporter.reportInvoicesOrderedByNumber();
-//		reporter.reportInvoicesGroupedByCustomer();
-//		reporter.reportOverdueInvoices();
-//		reporter.reportCustomersAndVolume();
+		reporter.reportInvoicesGroupedByCustomer();
+		reporter.reportOverdueInvoices();
+		reporter.reportCustomersAndVolume();
 
-//		billing.createCustomer("Merle", "Haggard", Terms.CASH);
-//		billing.createInvoice("Merle Haggard", 100);
-//		billing.createInvoice("John Hiatt", 999);
+		billing.createCustomer("Merle", "Haggard", Terms.CASH);
+		billing.createInvoice("Merle Haggard", 100);
+		billing.createInvoice("John Hiatt", 999);
 		billing.payInvoice(107);
 
 	}
