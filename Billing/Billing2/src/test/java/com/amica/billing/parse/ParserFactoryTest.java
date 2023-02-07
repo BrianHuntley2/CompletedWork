@@ -42,6 +42,11 @@ public class ParserFactoryTest {
 
     public Supplier<Parser> mockParserFactory = () -> mockParser;
 
+    @BeforeEach
+    public void setup(){
+        ParserFactory.resetParsers();
+    }
+
     @Test
     public void testCustomerCsvParser(){
         parser = ParserFactory.createParser(CUSTOMER_CSV);
@@ -71,5 +76,21 @@ public class ParserFactoryTest {
         ParserFactory.addParser("xyz", mockParserFactory);
         parser = ParserFactory.createParser(OTHER_FILETYPE);
         assertThat(parser, equalTo(mockParser));
+    }
+
+    @Test
+    public void testAddExistingParser(){
+        assertThrows(IllegalArgumentException.class, () -> ParserFactory.addParser("flat", mockParserFactory));
+    }
+
+    @Test
+    public void testReplaceParser(){
+        ParserFactory.replaceParser("csv", mockParserFactory);
+        assertThat(ParserFactory.createParser(CUSTOMER_CSV), equalTo(mockParser));
+    }
+
+    @Test
+    public void testReplaceNonExistingParser(){
+        assertThrows(IllegalArgumentException.class, () -> ParserFactory.replaceParser("abcd", mockParserFactory));
     }
 }
